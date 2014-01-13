@@ -6,7 +6,6 @@ serve(Coordinator) ->
     serve(Coordinator, []).
 
 serve(Coordinator, Clients) ->
-    io:format("~p : ~p~n", [self(), Clients]),
     receive
         {client, transfer, From, To, Asker} ->
             % io:format("~p : A~n", [self()]),
@@ -64,7 +63,7 @@ serve(Coordinator, Clients) ->
             % io:format("~p : E~n", [self()]),
             serve(Coordinator,
                 case exist(PID, Clients) of
-                    false -> [{PID, 2}|Clients]; % TODO 100
+                    false -> [{PID, 2}|Clients]; % TODO 10
                     true -> Clients
                 end);
         {client, has, PID, Asker} ->
@@ -77,6 +76,11 @@ serve(Coordinator, Clients) ->
         {client, delete, PID} ->
             % io:format("~p : G~n", [self()]),
             serve(Coordinator, lists:filter(fun({P, _}) -> P /= PID end, Clients));
+        display ->
+            io:format("~p : ~w~n", [self(),
+                                    lists:sort(fun({A, _},{B, _}) -> A < B end
+                                      , Clients)]),
+            serve(Coordinator, Clients);
         _ ->
             io:format("~p : H~n", [self()]),
             serve(Coordinator, Clients)
