@@ -8,14 +8,12 @@ serve(Coordinator) ->
 serve(Coordinator, Clients) ->
     receive
         {client, transfer, From, To, Asker} ->
-            % io:format("~p : A~n", [self()]),
             case exist(From, Clients) of
                 false -> Asker ! not_a_client;
                 true -> Coordinator ! {client, transfer, To, Asker}
             end,
             serve(Coordinator, Clients);
         {client, prepare, From, Asker} ->
-            % io:format("~p : B~n", [self()]),
             Asker ! case exist(From, Clients) of
                 false -> not_a_client;
                 true ->
@@ -27,7 +25,6 @@ serve(Coordinator, Clients) ->
             end,
             serve(Coordinator, Clients);
         {client, commit, From, Op, Asker} ->
-            % io:format("~p : C ~p ~p~n", [self(), Op, From]),
             case exist(From, Clients) of
                 false ->
                     Asker ! error,
@@ -45,13 +42,10 @@ serve(Coordinator, Clients) ->
                                     serve(Coordinator, [{From, Cash - 1}|lists:filter(fun({P, _}) -> P /= From end, Clients)])
                             end;
                         plus ->
-                            Asker ! ok,
                             serve(Coordinator, [{From, Cash + 1}|lists:filter(fun({P, _}) -> P /= From end, Clients)])
                     end
             end;
         {client, rollback, From} ->
-            % io:format("~p : D ~p~n", [self(), From]),
-            % io:format(" R ~p~n", [From]),
             case exist(From, Clients) of
                 false ->
                     serve(Coordinator, Clients);
@@ -60,21 +54,18 @@ serve(Coordinator, Clients) ->
                     serve(Coordinator, [{From, Cash - 1}|lists:filter(fun({P, _}) -> P /= From end, Clients)])
             end;
         {client, add, PID} ->
-            % io:format("~p : E~n", [self()]),
             serve(Coordinator,
                 case exist(PID, Clients) of
-                    false -> [{PID, 2}|Clients]; % TODO 10
+                    false -> [{PID, 10}|Clients];
                     true -> Clients
                 end);
         {client, has, PID, Asker} ->
-            % io:format("~p : F~n", [self()]),
             case exist(PID, Clients) of
                 false -> not_a_client;
                 true -> Asker ! {founded, self()}
             end,
             serve(Coordinator, Clients);
         {client, delete, PID} ->
-            % io:format("~p : G~n", [self()]),
             serve(Coordinator, lists:filter(fun({P, _}) -> P /= PID end, Clients));
         display ->
             io:format("~p : ~w~n", [self(),
