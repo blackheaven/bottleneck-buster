@@ -26,15 +26,13 @@ transaction(From, To, Bank) ->
 transaction_runner(From, To, Prepared) ->
     receive
         error ->
-            case (From /= false) and (To /= false) and Prepared of
+            case Prepared of
                 false -> ok;
                 true -> To ! rollback
             end,
             From ! {prepare, self()},
             transaction_runner(From, To, false);
-        prepared ->
-            From ! {prepare, self()},
-            walk(From, To, true);
+        prepared -> walk(From, To, true);
         {from, NFrom} ->
             NFrom ! {prepare, self()},
             walk(NFrom, To, Prepared);
