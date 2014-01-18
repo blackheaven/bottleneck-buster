@@ -5,8 +5,8 @@ run(NbBanks, NbClientsPerBank) ->
     Coordinator = spawn(coordinator, serve, []),
     Banks = create_banks(NbBanks, Coordinator),
     Clients = create_clients(NbClientsPerBank, Banks),
-    io:format("Begin~n"),
-    display_banks(Banks),
+    % io:format("Begin~n"),
+    % display_banks(Banks),
     lists:foreach(fun(Client) -> lists:foreach(fun(Other) ->
                         case Client /= Other of
                             true -> Client ! {transfer, new, Other};
@@ -14,9 +14,9 @@ run(NbBanks, NbClientsPerBank) ->
                         end
                                                end, Clients)
                   end, Clients),
-    wait_end([], Clients),
-    io:format("End~n"),
-    display_banks(Banks).
+    wait_end([], Clients).
+    % io:format("End~n"),
+    % display_banks(Banks).
 
 create_banks(Nb, Coordinator) ->
     lists:map(fun(_) -> spawn(bank, serve, [Coordinator]) end, lists:duplicate(Nb, ok)).
