@@ -21,19 +21,19 @@
         <h2>Introduction</h2>
         <p>
             Implanter des systèmes distribués est une tâche complexe qui requiert
-            de posséder de bons outils et d'avoir une bonne méthode afin que ces
-            systèmes puissent passer à l'échelle.
+            de bons outils et une bonne méthode afin que ces systèmes puissent passer à l'échelle.
         </p>
         <p>
             Nous verrons comment réaliser un <a href="http://en.wikipedia.org/wiki/Two-phase_commit_protocol">Two-phase commit</a>
-            en Erlang et nous verons comment, en deux itérations le rendre plus performant.
+            en Erlang et comment, en deux itérations nous pouvons le rendre plus performant.
         </p>
 
         <h2>Erlang</h2>
         <p>
             <a href="http://www.erlang.org/">Erlang</a> est un langage de programmation
             fonctionnel basé sur le modèle à acteur développé par Ericsson afin
-            de pouvoir construire des systèmes distribués et fiables utilisés en télécoms.
+            de pouvoir construire des systèmes distribués et fiables utilisés dans
+            le domaine des télécommunications.
         </p>
         <h3>Modèle à acteur</h3>
         <p>
@@ -59,7 +59,7 @@
         <p>
             Le point principal à retenir est que les modifications de variables
             sont impossible et de ce fait les boucles sont simulées par récursion,
-            qui plus est pour maintenir un état il faut obligatoirement construire
+            qui plus est, pour maintenir un état il faut obligatoirement construire
             une <a href="http://en.wikipedia.org/wiki/Finite-state_machine">machine à état finis</a>.
         </p>
         <h3>Machine virtuelle</h3>
@@ -74,10 +74,10 @@
             L'avantage de ce système est que la gestion des serveurs et des noeuds
             du système (ainsi que tous les aspects de gestion de pannes et de
             répartition de charge) sont gérés au niveau de la machine virtuelle et
-            non au niveau du programme, ce qui le simplie grandement.
+            non au niveau du programme, ce qui le simplifie grandement.
         </p>
         <p>
-            Tous ses aspects font que la machine virtuelle est en mesure de répartir
+            Tous ces aspects font que la machine virtuelle est en mesure de répartir
             la charge et les acteurs en fonction de leur communication, ce qui assure
             un passage à l'échelle quasi-linéaire pour peu que le système ne comporte pas
             de problème de gouleaux d'étranglement.
@@ -105,7 +105,7 @@
         <h2>Méthodologie de suppression des gouleaux d'étranglement</h2>
         <p>
             Pour supprimer les gouleaux d'étranglement il faut chercher les acteurs
-            qui ont beaucoup de données où qui reçoivent beaucoup de message et
+            qui ont beaucoup de données où qui reçoivent beaucoup de messages et
             en extraire une responsabilité dans un nouvel acteur.
         </p>
         <h2>Itérations</h2>
@@ -195,16 +195,17 @@ ok
             Tous les tests ont été réalisé à l'aide d'un ordinateur doté d'un <b>i7 870 @ 2.93 GHz</b> avec l'<b>HyperThreading active</b>, ce qui représent <b>8 coeurs logique</b>.
         </p>
         <p>
-            Ainsi que <b>2</b> lots de <b>G.Skill Kit Extreme3 2 x 4 Go PC10600 Ripjaws CAS 9</b>, <b>4</b> barettes de mémoire vives représentant <b>16Gio</b>.
+            Ainsi que <b>2</b> lots de <b>G.Skill Kit Extreme3 2 x 4 Go PC10600 Ripjaws CAS 9</b>, soit <b>4</b> barettes de mémoire vives représentant <b>16 Gio</b>.
         </p>
         <p>
-            L'ordinateur tourne sous <b>FreeBSD 9.2-AMD Generic</b> et Erlang est en version <b>16.b.03</b>.
+            L'ordinateur tourne sous <b>FreeBSD 9.2-AMD64 GENERIC</b> et Erlang est en version <b>16.b.03</b>.
         </p>
 
         <h4>Comparaison par itération et nombre de clients/banques</h4>
         <p>
             Il s'agit de mettre en évidence la capacité du système à gérer plus
-            de demande avec un nombre fixe de ressources.
+            de demandes avec un nombre fixe de ressources, pour voir si sa montée
+            en charge est linéraire ou non.
         </p>
         <p>
             Chaque <b>ligne</b> représente le nombre de <b>Banques</b> et chaque
@@ -269,7 +270,7 @@ ok
             En revanche, l'écart n'est pas significatif pour l'extraction du
             <b>Compte client</b>, mais nous pouvons pondéré ceci par le fait que
             les échelles de temps étant tellement faible que le moindre événement
-            système peut fosser les résultats, il faudrait comparer avec un jeu
+            système peut fausser les résultats, il faudrait comparer avec un jeu
             d'essai plus important.
         </p>
         <h4>Comparaison par nombre de coeurs alloués</h4>
@@ -301,11 +302,11 @@ ok
         <p>
             Les remarques sont les mêmes qu'à la section précédente, on voit que
             la perte en performances (par rapport à un gain linéaire en performance)
-            due à l'ajout de ressources est jusqu'à 70 fois moindres.
+            due à l'ajout de ressources est jusqu'à 70 fois moindres pour les itérations 2 et 3.
         </p>
         <p>
             De la même manière on ne constate pas de différences flagrantes entre
-            les deux dernière itérations.
+            les deux dernières itérations.
         </p>
 
         <h3>Comparaison de la taille des codes</h3>
@@ -372,7 +373,7 @@ ok
                     acteur, le nombre de messages envoyés et reçus par acteur ainsi
                     que son nombre de liens (nombre d'acteur auquel il a envoyé un
                     message ou qui lui en a envoyé un) sont plus utile pour trouver
-                    les gouleaux d'étranglement0
+                    les gouleaux d'étranglement.
                 </li>
                 <li>
                     Ce document est suffisament long, il comporte déjà plus de 7 pages
