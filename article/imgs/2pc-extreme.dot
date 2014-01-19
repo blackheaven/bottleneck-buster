@@ -1,0 +1,33 @@
+digraph "2PC Clean" {
+	graph [layout=dot]
+
+	b1 [label="Bank 1"]
+	b2 [label="Bank 2"]
+	c1 [label="Client 1"]
+	c2 [label="Client 2"]
+	c [label="Coordinator"]
+	t [label="Transaction"]
+	a1 [label="Account 1"]
+	a2 [label="Account 2"]
+
+    b1 -> c [label="register"]
+    b2 -> c [label="register"]
+    c1 -> b1 [label="register"]
+    c2 -> b2 [label="register"]
+    b1 -> a1 [label="create"]
+    b2 -> a2 [label="create"]
+
+    c1 -> t [label="create"]
+    t -> b1 [label="1. Transfer Client 1 -> 2"]
+    b1 -> t [label="2. Client 1 is in Bank 1"]
+    b1 -> c [label="3. Transfer Client 1 -> 2"]
+    c -> b1 [label="4. whereis Client 2"]
+    c -> b2 [label="5. whereis Client 2"]
+    b2 -> t [label="6. Client 2 is in Bank 2"]
+    t -> a1 [label="7. has enough money?"]
+    a1 -> t [label="8. yes"]
+    t -> a1 [label="9. Minus"]
+    t -> a2 [label="9. Plus"]
+    a1 -> t [label="10. ok/error"]
+    t -> a2 [label="(11.) Rollback"]
+}
