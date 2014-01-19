@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="">
     <meta name="author" content="">
-    <title>Search and destroys : bottlenecks in Erlang</title>
+    <title>Search and destroy: bottlenecks in Erlang</title>
     <link href="css/bootstrap.css" rel="stylesheet">
     <link href="css/highlight/default.css" rel="stylesheet">
   </head>
@@ -14,35 +14,35 @@
     <div class="container">
 
         <center>
-            <h1>Search and destroys : bottlenecks in Erlang</h1>
+            <h1>Search and destroy: bottlenecks in Erlang</h1>
             <h3>par <a href="https://twitter.com/gautier_difolco">Gautier DI FOLCO</a>, janvier 2014.</h3>
         </center>
 
-        <h2>Introduction</h2>
+        <h2 id="intro">Introduction</h2>
         <p>
             Implanter des systèmes distribués est une tâche complexe qui requiert
             de bons outils et une bonne méthode afin que ces systèmes puissent passer à l'échelle.
         </p>
         <p>
             Nous verrons comment réaliser un <a href="http://en.wikipedia.org/wiki/Two-phase_commit_protocol">Two-phase commit</a>
-            en Erlang et comment, en deux itérations nous pouvons le rendre plus performant.
+            en Erlang et comment, en deux itérations, nous pouvons le rendre plus performant.
         </p>
 
-        <h2>Erlang</h2>
+        <h2 id="erlang">Erlang</h2>
         <p>
             <a href="http://www.erlang.org/">Erlang</a> est un langage de programmation
-            fonctionnel basé sur le modèle à acteur développé par Ericsson afin
-            de pouvoir construire des systèmes distribués et fiables utilisés dans
-            le domaine des télécommunications.
+            fonctionnel basé sur le modèle à acteur, développé par Ericsson, afin
+            de pouvoir construire des systèmes distribués et fiables. Erlang était
+            destiné au domaine des télécommunications.
         </p>
         <h3>Modèle à acteur</h3>
         <p>
             Le <a href="http://en.wikipedia.org/wiki/Actor_model">modèle à acteur</a>
-            est une approche qui vise à concevoir un système sous forme d'un ensemble
-            de processus concurrents.
+            est une approche qui vise à concevoir un système sous la forme d'un ensemble
+            de <b>processus</b> concurrents.
         </p>
         <p>
-            Ces processus sont nommés Acteurs, il communiquent par envois de messages
+            Ces processus sont nommés <b>Acteur</b>s; Ils communiquent par envoi de messages
             (<i>ou <a href="http://en.wikipedia.org/wiki/Message_passing">message passing</a></i>).
         </p>
         <p>
@@ -52,123 +52,123 @@
         </p>
         <h3>Programmation fonctionnelle</h3>
         <p>
-            La programmation est à opposer à la programmation procédurale, il s'agit
-            d'exprimer les relations entre les données plutôt que de décrire l'ordre
-            des traitements qui leur seront appliqués.
+            La programmation fonctionnelle est à opposer à la programmation procédurale :
+            il s'agit d'exprimer les relations entre les données plutôt que de décrire
+            l'ordre des traitements qui leur seront appliqués.
         </p>
         <p>
             Le point principal à retenir est que les modifications de variables
-            sont impossible et de ce fait les boucles sont simulées par récursion,
-            qui plus est, pour maintenir un état il faut obligatoirement construire
-            une <a href="http://en.wikipedia.org/wiki/Finite-state_machine">machine à état finis</a>.
+            sont impossibles et, de ce fait, les boucles sont simulées par récursion;
+            De plus, pour pouvoir représenter la progression d'un taitement, il
+            faut impérativement construire une <a href="http://en.wikipedia.org/wiki/Finite-state_machine">machine à états finis</a>.
         </p>
         <h3>Machine virtuelle</h3>
         <p>
             De la même manière que les programmes JAVA et C# sont compilés vers
-            du <i><a href="http://en.wikipedia.org/wiki/Bytecode">bytecode</a></i>
-            pour être exécutés par une machine virtuelle, respectivement la JVM et la CLR,
-            les programmes Erlang sont compilés vers un format BEAM pour être exécuté
+            du <i><a href="http://en.wikipedia.org/wiki/Bytecode">bytecode</a></i>,
+            pour être exécutés par une machine virtuelle, respectivement la JVM et la CLR;
+            les programmes Erlang sont compilés vers un format BEAM pour être exécutés
             par le <i>Erlang runtime system</i>.
         </p>
         <p>
-            L'avantage de ce système est que la gestion des serveurs et des noeuds
+            L'avantage de ce système est que la gestion des serveurs et des n&oelig;uds
             du système (ainsi que tous les aspects de gestion de pannes et de
-            répartition de charge) sont gérés au niveau de la machine virtuelle et
-            non au niveau du programme, ce qui le simplifie grandement.
+            répartition de charge) soit confiée à la machine virtuelle et
+            non au programme, ce qui le simplifie grandement.
         </p>
         <p>
             Tous ces aspects font que la machine virtuelle est en mesure de répartir
             la charge et les acteurs en fonction de leur communication, ce qui assure
-            un passage à l'échelle quasi-linéaire pour peu que le système ne comporte pas
+            un passage à l'échelle quasi-linéaire, pour peu que le système ne comporte pas
             de problème de gouleaux d'étranglement.
         </p>
 
-        <h2>Two-phase commit</h2>
+        <h2 id="2pc">Two-phase commit</h2>
         <p>
-            Pour les besoins de notre étude nous allons implanter un <a href="http://en.wikipedia.org/wiki/Two-phase_commit_protocol">Two-phase commit</a>
-            dans le cadre d'une gestion de compte bancaire de la manière suivante :
+            Pour les besoins de notre étude, nous allons implanter un <a href="http://en.wikipedia.org/wiki/Two-phase_commit_protocol">Two-phase commit</a>
+            dans le cadre d'une gestion de comptes bancaires, de la manière suivante :
             <ul>
-                <li>Il y aura un <b>Coordinateur</b> chargé de relier les différentes banques entre elle.</li>
-                <li>Dans cet objectif les <b>Banques</b>, lors de leur création vont se déclarer.</li>
-                <li>Un <b>Client</b> va s'inscrire à un banque, il va démarer un compte avec un crédit de 10 unités.</li>
-                <li>Le <b>Client</b> va ensuite faire une demande de transfere de un crédit à sa <b>Banque</b> vers un autre client.</li>
-                <li>La <b>Banque</b> va transmettre cette demande au <b>Coordinateur</b>.</li>
-                <li>Le <b>Coordinateur</b> va contacter toutes ses <b>Banques</b> pour savoir laquelle gère le compte du bénificiaire.</li>
-                <li>La <b>Banque</b> en charge du compte du <b>Client</b> destinataire répondra au <b>Coordinateur</b>.</li>
-                <li>Le <b>Coordinateur</b> va ensuite demander à la <b>Banque</b> du <b>Client</b> émetteur de s'assurer qu'il dispose d'asset d'argent pour effectuer le virement.</li>
-                <li>Le <b>Coordinateur</b> va ensuite effectuer un <b>commit</b> en émettant deux actions : ajouter et retirer une unité sur les comptes respectifs.</li>
-                <li>Si la <b>Banque</b> du <b>Client</b> émetteur ne possède plus suffisament d'unités, elle va le signaler au <b>Coordinateur</b>.</li>
-                <li>Le <b>Coordinateur</b> va ensuite émettre un <b>rollback</b> auprès de la <b>Banque</b> du <b>Client</b> qui retirera une unité.</li>
+                <li>Il y aura un <b>Coordinateur</b> chargé de relier les différentes banques entre elles.</li>
+                <li>À cette fin, les <b>Banques</b>, lors de leur création, vont se déclarer au <b>Coordinateur</b>.</li>
+                <li>Un <b>Client</b> s'inscrira alors auprès d'une <b>Banque</b> qui lui ouvrira un compte créditeur de 10 unités.</li>
+                <li>Le <b>Client</b> fera, auprès de sa <b>Banque</b>, une demande de transfert d'une unité vers un autre <b>Client</b>.</li>
+                <li>La <b>Banque</b> transmettra cette demande au <b>Coordinateur</b>.</li>
+                <li>Le <b>Coordinateur</b> contactera toutes ses <b>Banques</b> pour savoir laquelle gère le compte du bénificiaire.</li>
+                <li>La <b>Banque</b>, gestionnaire du compte du <b>Client</b> destinataire, répondra au <b>Coordinateur</b>.</li>
+                <li>Le <b>Coordinateur</b> demandera à la <b>Banque</b> du <b>Client</b> émetteur de s'assurer qu'il dispose de suffisament d'argent pour effectuer le virement.</li>
+                <li>Le <b>Coordinateur</b> effectuera un <b>commit</b> en émettant deux demandes d'actions : respectivement ajouter et retirer une unité.</li>
+                <li>Si la <b>Banque</b> du <b>Client</b> émetteur ne possède plus suffisament d'unités, elle le signalera au <b>Coordinateur</b>.</li>
+                <li>Le <b>Coordinateur</b> émettra alors une demande de <b>rollback</b> auprès de la <b>Banque</b> du destinataire qui lui retirera une unité.</li>
             </ul>
         </p>
         <center><img src="imgs/2pc-naive.svg"/></center>
-        <h2>Méthodologie de suppression des gouleaux d'étranglement</h2>
+        <h2 id="methodo">Méthodologie de suppression des gouleaux d'étranglement</h2>
         <p>
-            Pour supprimer les gouleaux d'étranglement il faut chercher les acteurs
-            qui ont beaucoup de données où qui reçoivent beaucoup de messages et
+            Pour supprimer les gouleaux d'étranglement, il faut chercher les acteurs
+            qui ont beaucoup de données ou qui reçoivent beaucoup de messages et
             en extraire une responsabilité dans un nouvel acteur.
         </p>
-        <h2>Itérations</h2>
+        <h2 id="versions">Itérations</h2>
         <p>
-            En partant de ce concept, trois versions, détaillées ci-dessous ont été dérivées.
+            En partant de ce concept, trois versions, détaillées ci-dessous, ont été dérivées.
         </p>
         <p>
-            Toutes les sources se trouve a cette adresse : <a href="https://github.com/blackheaven/bottleneck-buster">https://github.com/blackheaven/bottleneck-buster</a>.
+            Toutes les sources se trouvent à cette adresse : <a href="https://github.com/blackheaven/bottleneck-buster">https://github.com/blackheaven/bottleneck-buster</a>.
         </p>
-        <h3>Itération 1 : Approche naïve</h3>
+        <h3 id="v1">Itération 1 : Approche naïve</h3>
         <p>
-            Comme son nom l'indique il s'agit juste d'une implantation brute de l'algorithme.
+            Comme son nom l'indique, il s'agit juste d'une implantation brute de l'algorithme.
         </p>
         <p>
             Les sources de la version se trouvent dans le répertoire <a href="https://github.com/blackheaven/bottleneck-buster/tree/master/dirty">dirty</a>.
         </p>
 
-        <h3>Itération 2 : Extraction de la transaction</h3>
+        <h3 id="v2">Itération 2 : Extraction de la transaction</h3>
         <p>
             Le but ici est de décharger le <b>Coordinateur</b>, qui était devenu
-            le gouleau d'étranglement du système du fait qu'il conduisait toutes
-            les transactions, en créant un acteur chargé de de gérer une <b>Transaction</b>.
+            le gouleau d'étranglement du système, du fait qu'il conduisait toutes
+            les transactions, en créant un acteur chargé de gérer une <b>Transaction</b>.
         </p>
         <p>
-            <b>Coordinateur</b> ne sert plus qu'à trouver la <b>Banque</b> du <b>Client</b> destinataire.
+            Le rôle du <b>Coordinateur</b> se limite à trouver la <b>Banque</b> du <b>Client</b> destinataire.
         </p>
         <p>
-            <b>Transaction</b> est de plus en mesure de se relancer seule si elle a échouée.
+            Qui plus est, la <b>Transaction</b> est en mesure de se relancer par elle-même, en cas d'échec.
         </p>
         <center><img src="imgs/2pc-clean.svg"/></center>
         <p>
             Les sources de la version se trouvent dans le répertoire <a href="https://github.com/blackheaven/bottleneck-buster/tree/master/clean">clean</a>.
         </p>
 
-        <h3>Itération 3 : Extraction du Compte client</h3>
+        <h3 id="v3">Itération 3 : Extraction du Compte client</h3>
         <p>
-            Le but ici est de décharger les <b>Banques</b>, qui était devenu
-            le gouleau d'étranglement du système, car elles géraient les tous les
-            mouvements de comptes, en créant un acteur chargé de de gérer un
-            <b>Compte client</b>.
+            Le but ici est de décharger les <b>Banques</b>, devenues, à leur tour,
+            le gouleau d'étranglement du système, car elles géraient tous les
+            mouvements bancaires, par la création d'un acteur chargé de la gestion
+            d'un <b>Compte client</b>.
         </p>
         <p>
-            <b>Banque</b> ne sert plus qu'à trouver les <b>Comptes clients</b>.
+            Le rôle de la <b>Banque</b> se borne à trouver les <b>Comptes clients</b>.
         </p>
         <center><img src="imgs/2pc-extreme.svg"/></center>
         <p>
             Les sources de la version se trouvent dans le répertoire <a href="https://github.com/blackheaven/bottleneck-buster/tree/master/extreme">extreme</a>.
         </p>
 
-        <h2>Bilan</h2>
-        <h3>Comparaison des performances</h3>
+        <h2 id="sumup">Bilan</h2>
+        <h3 id="benchs">Comparaison des performances</h3>
         <p>
-            Pour comparer les performances nous allons utiliser le module ci-dessous
-            qui se charge de créer un <b>Coordinateur</b> et un nombre de
+            Pour comparer les performances, nous allons utiliser le module <code>sim</code>
+            qui se chargera de créer un <b>Coordinateur</b> et un nombre paramétrable de
             <b>Banques</b> et de <b>Clients</b> par <b>Banque</b>.
         </p>
         <p>
-            Puis, pour générer un nombre de <b>Transactions</b> suffisant, va
-            ordonner, pour chaque <b>Client</b>, un transfère vers tous les autres
-            <b>Client</b>.
+            Puis, pour générer un nombre suffisant de <b>Transactions</b>, le module va
+            ordonner, pour chaque <b>Client</b>, un transfert vers tous les autres
+            <b>Clients</b>.
         </p>
         <p>
-            Puis, dans le Shell d'Erlang  (lancé via <code>$ erl</code>)nous entrerons les commandes suivantes :
+            Pour ce faire, dans le Shell d'Erlang  (lancé via <code>$ erl</code>) nous entrerons les commandes suivantes :
         </p>
         <pre><code>
 Erlang R16B03 (erts-5.10.4) [source] [smp:2:2] [async-threads:10] [kernel-poll:false]
@@ -188,14 +188,11 @@ ok
 {470612,ok} % Temps en µs
         </code></pre>
         <p>
-            Pour chaque mesure 3 lancements successifs ont été réalisés et la
+            Pour chaque mesure, 3 lancements successifs ont été réalisés et la
             moyenne obtenue donne le résultat reporté.
         </p>
         <p>
-            Tous les tests ont été réalisé à l'aide d'un ordinateur doté d'un <b>i7 870 @ 2.93 GHz</b> avec l'<b>HyperThreading active</b>, ce qui représent <b>8 coeurs logique</b>.
-        </p>
-        <p>
-            Ainsi que <b>2</b> lots de <b>G.Skill Kit Extreme3 2 x 4 Go PC10600 Ripjaws CAS 9</b>, soit <b>4</b> barettes de mémoire vives représentant <b>16 Gio</b>.
+            Tous les tests ont été réalisés à l'aide d'un ordinateur doté d'un <b>i7 870 @ 2.93 GHz</b> avec l'<b>HyperThreading activé</b>, ce qui représente <b>8 c&oelig;urs logique</b>, ainsi que <b>2</b> lots de <b>G.Skill Kit Extreme3 2 x 4 Go PC10600 Ripjaws CAS 9</b>, soit <b>4</b> barettes de mémoire vive s'élevant <b>16 Gio</b>.
         </p>
         <p>
             L'ordinateur tourne sous <b>FreeBSD 9.2-AMD64 GENERIC</b> et Erlang est en version <b>16.b.03</b>.
@@ -203,9 +200,9 @@ ok
 
         <h4>Comparaison par itération et nombre de clients/banques</h4>
         <p>
-            Il s'agit de mettre en évidence la capacité du système à gérer plus
-            de demandes avec un nombre fixe de ressources, pour voir si sa montée
-            en charge est linéraire ou non.
+            Il s'agit de mettre en évidence la capacité du système à gérer d'avantage
+            de demandes avec un nombre fixe de ressources, pour observer si sa montée
+            en charge est linéaire ou non.
         </p>
         <p>
             Chaque <b>ligne</b> représente le nombre de <b>Banques</b> et chaque
@@ -262,26 +259,26 @@ ok
             </div>
         </div>
         <p>
-            On constate que le fait d'avoir extrait la <b>Transaction</b> à augmenter
-            drastiquement les performances puisqu'on observe des performances jusqu'à
-            60 fois supérieures.
+            On constate que le fait d'avoir extrait la <b>Transaction</b> a augmenté
+            drastiquement les performances, puisqu'on observe des performances jusqu'à
+            <b>60 fois supérieures</b>.
         </p>
         <p>
             En revanche, l'écart n'est pas significatif pour l'extraction du
-            <b>Compte client</b>, mais nous pouvons pondéré ceci par le fait que
-            les échelles de temps étant tellement faible que le moindre événement
-            système peut fausser les résultats, il faudrait comparer avec un jeu
-            d'essai plus important.
+            <b>Compte client</b>, mais nous pouvons pondérer ceci par le fait que
+            les échelles de temps étant tellement faibles, le moindre événement
+            système peut fausser les résultats. Il faudrait comparer avec un jeu
+            d'essais plus importants.
         </p>
-        <h4>Comparaison par nombre de coeurs alloués</h4>
+        <h4>Comparaison par nombre de c&oelig;urs alloués</h4>
         <p>
             Il s'agit de mettre en évidence la capacité du système à gérer une
-            demande fixe (<b>8 Banques avec 10 Client chacune</b>) avec un nombre
-            croissant de ressources pour voir sa capacité à passer à l'échelle.
+            demande fixe (<b>8 Banques avec 10 Clients chacune</b>) avec un nombre
+            croissant de ressources, pour observer sa capacité à passer à l'échelle.
         </p>
         <p>
             Chaque <b>ligne</b> représente une itération et chaque <b>colonne</b>
-            le nombre de <b>coeurs CPU alloués</b>.
+            le nombre de <b>c&oelig;urs CPU alloués</b>.
         </p>
         <p>
             Chaque <b>cellule</b> indique le résultat en <b>secondes</b>.
@@ -300,24 +297,24 @@ ok
             <canvas id="speedUp" width="1000" height="600"></canvas>
         </center>
         <p>
-            Les remarques sont les mêmes qu'à la section précédente, on voit que
-            la perte en performances (par rapport à un gain linéaire en performance)
-            due à l'ajout de ressources est jusqu'à 70 fois moindres pour les itérations 2 et 3.
+            Les remarques sont les mêmes qu'à la section précédente : on constate que
+            la perte en performances (par rapport à un gain linéaire en performances),
+            due à l'ajout de ressources, est jusqu'à <b>70 fois moindre</b> pour les itérations 2 et 3.
         </p>
         <p>
-            De la même manière on ne constate pas de différences flagrantes entre
+            De la même manière, on ne constate pas de différences flagrantes entre
             les deux dernières itérations.
         </p>
 
-        <h3>Comparaison de la taille des codes</h3>
+        <h3 id="loc">Comparaison de la taille des codes</h3>
         <p>
-            Ici nous tentons de déterminer si l'accroissement de la vitesse du
+            Ici, nous tentons de déterminer si l'accroissement de la vitesse du
             système et de sa capacité à passer à l'échelle ne s'est pas fait au
             détriment d'un ajout de complexité dans le-dit système.
         </p>
         <p>
             Nous allons donc comparer le nombre de lignes de code non-vides nécessaires
-            pour chaque acteur.
+            à chaque acteur.
         </p>
         <p>
             Chaque <b>ligne</b> représente une itération et chaque <b>colonne</b>
@@ -331,66 +328,66 @@ ok
                 <tr> <th>#</th> <th>Coordinateur</th> <th>Banque</th> <th>Client</th> <th>Transaction</th> <th>Compte client</th> <th>Total</th></tr>
             </thead>
             <tbody>
-                <tr><th>1</th><td>44</td><td>76</td><td>23</td><td>-</td><td>-</td><td>99</td></tr>
+                <tr><th>1</th><td>44</td><td>76</td><td>23</td><td>-</td><td>-</td><td>143</td></tr>
                 <tr><th>2</th><td>14</td><td>76</td><td>15</td><td>27</td><td>-</td><td>132</td></tr>
                 <tr><th>3</th><td>14</td><td>39</td><td>15</td><td>29</td><td>28</td><td>125</td></tr>
             </tbody>
         </table>
         <p>
-            Le système a vu son nombre de ligne augmenté d'au plus un tiers, ce qui
-            pourrait indiquer une complexification de celui-ci. Mais il n'en est
-            rien puisque son nombre moyen de ligne par acteur est lui passé de 33 à 25,
-            ce qui implique une diminution d'un quart, les rendant ainsi plus simple,
-            plus compréhensible et donc plus maintenable.
+            Le système a vu son nombre de lignes diminué de plus de 10%, ce qui
+            implique une simplification de celui-ci. De plus, le nombre moyen de
+            lignes par acteur est, lui, passé de 48 à 25, ce qui indique une diminution
+            de près de la moitié, rendant ainsi les acteurs plus simples, plus
+            compréhensibles et donc plus maintenables.
         </p>
 
-        <h2>Conclusion</h2>
+        <h2 id="conclusion">Conclusion</h2>
         <p>
-            Nous avons vu qu'Erlang nous permettait de construire simplement et
-            rapidement des systèmes concurrents et distribués, ce qui s'avère
+            Nous avons vu qu'Erlang nous permettait de construire, simplement et
+            rapidement, des systèmes concurrents et distribués : cela s'avère
             utile pour tester des protocoles et des architectures.
         </p>
         <p>
-            Nous avons vu que la simplification et la diminution du nombre de données
-            par acteur augmentait la capacité du système à passer à l'échelle.
+            Nous avons vu que la diminution du nombre de données par acteur et
+            leur simplification augmentait la capacité du système à passer à l'échelle.
         </p>
 
-        <h3>Notes</h3>
+        <h3 id="notes">Notes</h3>
         <p>
-            Toutes les sources se trouvent ici <a href="https://github.com/blackheaven/bottleneck-buster/">https://github.com/blackheaven/bottleneck-buster/</a>.
+            Toutes les sources se trouvent à cette adresse : <a href="https://github.com/blackheaven/bottleneck-buster/">https://github.com/blackheaven/bottleneck-buster/</a>.
         </p>
         <p>
             Cette étude n'a pas pris en compte toute une partie de la détection des
-            gouleaux d'étranglement basé sur le profiling pour deux raisons :
+            gouleaux d'étranglement basée sur le profiling pour deux raisons :
             <ul>
                 <li>
                     La <a href="http://www.erlang.org/doc/efficiency_guide/profiling.html">documentation officielle</a>
                     présente un certain nombre d'outils qui ne permettent de mettre
-                    en valeur que les sous-fonctions consommants le plus de ressources
-                    CPU, comme tous les outils de profiling de langage standard.
+                    en valeur que les sous-fonctions consommant le plus de ressources
+                    CPU, comme tous les outils de profiling de langages standard.
                     Cette approche n'est plus pertinente* dans ce genre de systèmes
-                    où des métriques comme le nombre de ressources consommées par
+                    où des métriques, comme le nombre de ressources consommées par
                     acteur, le nombre de messages envoyés et reçus par acteur ainsi
-                    que son nombre de liens (nombre d'acteur auquel il a envoyé un
-                    message ou qui lui en a envoyé un) sont plus utile pour trouver
+                    que son nombre de liens (nombre d'acteurs auxquels il a envoyé un
+                    message ou qui lui en ont envoyé un), sont plus utiles pour trouver
                     les gouleaux d'étranglement.
                 </li>
                 <li>
                     Ce document est suffisament long, il comporte déjà plus de 7 pages
-                    contre les 2 demandés.
+                    contre les 2 demandées.
                 </li>
             </ul>
         </p>
         <p>
-            * Lorsque l'auteur a décidé de proposer ce sujet il comptait parler
+            * Lorsque l'auteur a décidé de proposer ce sujet, il envisageait de parler
             de l'<a href="http://www.erlang-factory.com/conference/SFBay2013/speakers/AlexanderGounares">intervention</a>
-            faites par <a href="http://concurix.com/home">Concurix</a> lors du
-            <a href="http://www.erlang-factory.com/conference/SFBay2013/">Erlang Factory SF Bay Area 2013</a>
+            faite par <a href="http://concurix.com/home">Concurix</a> lors du
+            <a href="http://www.erlang-factory.com/conference/SFBay2013/">Erlang Factory SF Bay Area 2013</a>,
             durant laquelle un <a href="http://www.youtube.com/watch?v=GyHXLIHtPDM&feature=youtu.be&t=19m40s">outil de visualisation graphique des gouleaux d'étranglement</a>
-            a été présenté. Malheureusement le-dit outil comporte deux parties :
-            une à installer en locale nommée <a href="https://github.com/Concurix/cx_runtime">concurix_runtime</a>
-            et une autre hébergée sur les serveurs de Concurix qui a été désactivée
-            suite à un changement d'API, mais qui sera, après un échange de mails
+            a été présenté. Malheureusement, le-dit outil comporte deux parties :
+            une partie à installer en local (nommée <a href="https://github.com/Concurix/cx_runtime">concurix_runtime</a>)
+            et une autre partie hébergée sur les serveurs de Concurix, désactivée
+            suite à un changement d'API, mais qui sera, après un échange de courriels
             avec Concurix, remise en place dans les prochains mois.
         </p>
     </div>
