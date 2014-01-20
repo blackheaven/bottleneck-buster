@@ -80,7 +80,7 @@
             Tous ces aspects font que la machine virtuelle est en mesure de répartir
             la charge et les acteurs en fonction de leur communication, ce qui assure
             un passage à l'échelle quasi-linéaire, pour peu que le système ne comporte pas
-            de problème de gouleaux d'étranglement.
+            de problème de goulots d'étranglement.
         </p>
 
         <h2 id="2pc">Two-phase commit</h2>
@@ -102,9 +102,9 @@
             </ul>
         </p>
         <center><img src="imgs/2pc-naive.svg"/></center>
-        <h2 id="methodo">Méthodologie de suppression des gouleaux d'étranglement</h2>
+        <h2 id="methodo">Méthodologie de suppression des goulots d'étranglement</h2>
         <p>
-            Pour supprimer les gouleaux d'étranglement, il faut chercher les acteurs
+            Pour supprimer les goulots d'étranglement, il faut chercher les acteurs
             qui ont beaucoup de données ou qui reçoivent beaucoup de messages et
             en extraire une responsabilité dans un nouvel acteur.
         </p>
@@ -126,7 +126,7 @@
         <h3 id="v2">Itération 2 : Extraction de la transaction</h3>
         <p>
             Le but ici est de décharger le <b>Coordinateur</b>, qui était devenu
-            le gouleau d'étranglement du système, du fait qu'il conduisait toutes
+            le goulot d'étranglement du système, du fait qu'il conduisait toutes
             les transactions, en créant un acteur chargé de gérer une <b>Transaction</b>.
         </p>
         <p>
@@ -143,7 +143,7 @@
         <h3 id="v3">Itération 3 : Extraction du Compte client</h3>
         <p>
             Le but ici est de décharger les <b>Banques</b>, devenues, à leur tour,
-            le gouleau d'étranglement du système, car elles géraient tous les
+            le goulot d'étranglement du système, car elles géraient tous les
             mouvements bancaires, par la création d'un acteur chargé de la gestion
             d'un <b>Compte client</b>.
         </p>
@@ -358,7 +358,7 @@ ok
         </p>
         <p>
             Cette étude n'a pas pris en compte toute une partie de la détection des
-            gouleaux d'étranglement basée sur le profiling pour deux raisons :
+            goulots d'étranglement basée sur le profiling pour deux raisons :
             <ul>
                 <li>
                     La <a href="http://www.erlang.org/doc/efficiency_guide/profiling.html">documentation officielle</a>
@@ -370,7 +370,7 @@ ok
                     acteur, le nombre de messages envoyés et reçus par acteur ainsi
                     que son nombre de liens (nombre d'acteurs auxquels il a envoyé un
                     message ou qui lui en ont envoyé un), sont plus utiles pour trouver
-                    les gouleaux d'étranglement.
+                    les goulots d'étranglement.
                 </li>
                 <li>
                     Ce document est suffisament long, il comporte déjà plus de 7 pages
@@ -383,7 +383,7 @@ ok
             de l'<a href="http://www.erlang-factory.com/conference/SFBay2013/speakers/AlexanderGounares">intervention</a>
             faite par <a href="http://concurix.com/home">Concurix</a> lors du
             <a href="http://www.erlang-factory.com/conference/SFBay2013/">Erlang Factory SF Bay Area 2013</a>,
-            durant laquelle un <a href="http://www.youtube.com/watch?v=GyHXLIHtPDM&feature=youtu.be&t=19m40s">outil de visualisation graphique des gouleaux d'étranglement</a>
+            durant laquelle un <a href="http://www.youtube.com/watch?v=GyHXLIHtPDM&feature=youtu.be&t=19m40s">outil de visualisation graphique des goulots d'étranglement</a>
             a été présenté. Malheureusement, le-dit outil comporte deux parties :
             une partie à installer en local (nommée <a href="https://github.com/Concurix/cx_runtime">concurix_runtime</a>)
             et une autre partie hébergée sur les serveurs de Concurix, désactivée
