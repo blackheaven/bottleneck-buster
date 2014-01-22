@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="fr">
+
+    <head>
+        <meta charset="utf-8">
+
+        <title>Destroy all the bottlenecks!</title>
+
+        <meta name="description" content="Coding Dojo introductif à la programmation fonctionnelle">
+        <meta name="author" content="Gautier DI FOLCO">
+
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+        <link rel="stylesheet" href="css/reveal.min.css">
+        <link rel="stylesheet" href="css/theme/night.css" id="theme">
+
+        <!-- For syntax highlighting -->
+        <link rel="stylesheet" href="lib/css/zenburn.css">
+
+        <!-- If the query includes 'print-pdf', use the PDF print sheet -->
+        <script>
+            document.write( '<link rel="stylesheet" href="css/print/' + ( window.location.search.match( /print-pdf/gi ) ? 'pdf' : 'paper' ) + '.css" type="text/css" media="print">' );
+        </script>
+
+        <!--[if lt IE 9]>
+        <script src="lib/js/html5shiv.js"></script>
+        <![endif]-->
+    </head>
+
+    <body>
+
+        <div class="reveal">
+
+            <div class="slides">
+                <section data-markdown>
+                    <script type="text/template">
+                        ![Destroy all the bottlenecks!](destroy.jpg)
+
+                        Lyon, 23/01/14 / [@gautier_difolco](https://twitter.com/gautier_difolco)
+                    </script>
+                </section>
+                <section data-markdown>
+                    <script type="text/template">
+                        ![Naif](2pc-naive.svg)
+                    </script>
+                </section>
+                <section data-markdown>
+                    <script type="text/template">
+                        ![Clean](2pc-clean.svg)
+                    </script>
+                </section>
+                <section data-markdown>
+                    <script type="text/template">
+                        ![work](work.png)
+                    </script>
+                </section>
+                <section data-markdown>
+                    <script type="text/template">
+                        ![extreme](2pc-extreme.svg)
+                    </script>
+                </section>
+                <section>
+                    <center>
+                        <canvas id="speedUp" width="1000" height="600"></canvas>
+                    </center>
+                </section>
+                <section data-markdown>
+                    <script type="text/template">
+\#  |   Coordinateur  | Banque  |       Client  |       Transaction  |  Compte client  |        Total
+--- | --- | --- | --- | --- | --- | --- | --- | ---
+*1* |   44 |    76 |    23 |    - |     - |     143
+*2* |   14 |    76 |    15 |    27 |    - |     132
+*3* |   14 |    39 |    15 |    29 |    28 |    125
+
+                    </script>
+                </section>
+                <section data-markdown>
+                    <script type="text/template">
+                        ![simplicity](simplicity.jpg)
+                    </script>
+                </section>
+                <section data-markdown>
+                    <script type="text/template">
+### 20 Banques - 50 clients/banques
+
+\#  | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8
+--- | --- | --- | --- | --- | --- | --- | --- | ---
+*2* | 0.020 | 0.088 | 0.346 | 1.530 | 3.820 | 3.600 | 5.211 | 15.114
+*3* | 0.007 | 0.051 | 0.153 | 0.730 | 2.338 | 5.247 | 10.304 | 22.099
+                    </script>
+                </section>
+                <section>
+                    <center>
+                        <canvas id="slowDown" width="1000" height="600"></canvas>
+                    </center>
+                </section>
+                <section data-markdown>
+                    <script type="text/template">
+                        ![scale](scale.jpg)
+                    </script>
+                </section>
+                <section data-markdown>
+                    <script type="text/template">
+                        ![scheduling](scheduling.png)
+                    </script>
+                </section>
+                <section data-markdown>
+                    <script type="text/template">
+                        ![erlang](erlang.jpg)
+                    </script>
+                </section>
+            </div>
+
+        </div>
+
+        <script src="lib/js/head.min.js"></script>
+        <script src="js/reveal.min.js"></script>
+
+        <script>
+
+            // Full list of configuration options available here:
+            // https://github.com/hakimel/reveal.js#configuration
+            Reveal.initialize({
+                controls: true,
+                progress: true,
+                history: true,
+                center: true,
+
+                theme: Reveal.getQueryHash().theme, // available themes are in /css/theme
+                transition: Reveal.getQueryHash().transition || 'default', // default/cube/page/concave/zoom/linear/fade/none
+
+                // Optional libraries used to extend on reveal.js
+                dependencies: [
+                    { src: 'lib/js/classList.js', condition: function() { return !document.body.classList; } },
+                    { src: 'plugin/markdown/marked.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+                    { src: 'plugin/markdown/markdown.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+                    { src: 'plugin/highlight/highlight.js', async: true, callback: function() { hljs.initHighlightingOnLoad(); } },
+                    { src: 'plugin/zoom-js/zoom.js', async: true, condition: function() { return !!document.body.classList; } },
+                    { src: 'plugin/notes/notes.js', async: true, condition: function() { return !!document.body.classList; } }
+                ]
+            });
+
+        </script>
+
+        <script src="js/jquery.min.js"></script>
+        <script src="js/Chart.min.js"></script>
+        <script>
+            var dataSpeed = {
+                labels : [1,2,3,4,5,6,7,8],
+                datasets : [
+                    {
+                        fillColor : "rgba(220,220,220,0.5)",
+                        strokeColor : "rgba(220,220,220,1)",
+                        pointColor : "rgba(220,220,220,1)",
+                        pointStrokeColor : "#fff",
+                        data : [0.001,0.016,0.086,0.309,0.943,2.239,4.131,8.265]
+                    },
+                    {
+                        fillColor : "rgba(151,187,205,0.5)",
+                        strokeColor : "rgba(151,187,205,1)",
+                        pointColor : "rgba(151,187,205,1)",
+                        pointStrokeColor : "#fff",
+                        data : [0.001,0.003,0.007,0.014,0.021,0.039,0.066,0.114]
+                    },
+                    {
+                        fillColor : "rgba(121,121,121,0.5)",
+                        strokeColor : "rgba(121,121,121,1)",
+                        pointColor : "rgba(121,121,121,1)",
+                        pointStrokeColor : "#fff",
+                        data : [0.001,0.003,0.006,0.014,0.023,0.039,0.073,0.112]
+                    }
+                ]
+            };
+            new Chart($('#speedUp').get(0).getContext("2d")).Line(dataSpeed);
+
+            var dataSlow = {
+                labels : [1,2,3,4,5,6,7,8],
+                datasets : [
+                    {
+                        fillColor : "rgba(220,220,220,0.5)",
+                        strokeColor : "rgba(220,220,220,1)",
+                        pointColor : "rgba(220,220,220,1)",
+                        pointStrokeColor : "#fff",
+                        data : [0.020, 0.088, 0.346, 1.530, 3.820, 3.600, 5.211, 15.114]
+                    },
+                    {
+                        fillColor : "rgba(151,187,205,0.5)",
+                        strokeColor : "rgba(151,187,205,1)",
+                        pointColor : "rgba(151,187,205,1)",
+                        pointStrokeColor : "#fff",
+                        data : [0.007, 0.051, 0.153, 0.730, 2.338, 5.247, 10.304, 22.099]
+                    }
+                ]
+            };
+            new Chart($('#slowDown').get(0).getContext("2d")).Line(dataSlow);
+        </script>
+
+    </body>
+</html>
